@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between mb-10">
       <h1>User list</h1>
       <!-- Button to open create user dialog -->
-      <el-button type="primary" @click="dialogFormVisible = true">
+      <el-button type="primary" @click="openCreateDialog">
         Create User
       </el-button>
     </div>
@@ -21,7 +21,7 @@
             width="220"
             confirm-button-text="OK"
             cancel-button-text="No, Thanks"
-            :icon="InfoFilled"
+            icon="el-icon-info"
             icon-color="#626AEF"
             title="Are you sure to delete this?"
             @confirm="handleDelete(scope.row)"
@@ -30,7 +30,6 @@
               <el-button type="danger" size="small">Delete</el-button>
             </template>
           </el-popconfirm>
-          <!-- Button to edit user (already implemented) -->
           <el-button plain @click="showEditModal(scope.row)">Edit</el-button>
         </template>
       </el-table-column>
@@ -39,16 +38,16 @@
     <!-- Pagination -->
     <div class="flex justify-end mt-10">
       <el-pagination
-        v-model="currentPage"
+        v-model:current-page="currentPage"
         @current-change="handleCurrentChange"
         background
-        layout="total,sizes, prev, pager, next"
+        layout="total, sizes, prev, pager, next"
         :total="totalUsers"
       />
     </div>
 
-    <!-- Dialog for creating a new user -->
-    <el-dialog v-model="dialogFormVisible" title="Create User" width="500">
+    <!-- Dialog for creating/editing a user -->
+    <el-dialog v-model="dialogFormVisible" :title="isEditMode ? 'Edit User' : 'Create User'" width="500">
       <el-form
         :model="newUserForm"
         :rules="newUserFormRules"
@@ -70,12 +69,15 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="resetNewUserForm">Cancel</el-button>
-          <el-button type="primary" @click="createUser" >Create</el-button>
+          <el-button type="primary" @click="isEditMode ? updateUser() : createUser()">
+            {{ isEditMode ? 'Update' : 'Create' }}
+          </el-button>
         </div>
       </template>
     </el-dialog>
   </div>
 </template>
+
 <script setup>
 import { ref, reactive } from "vue";
 import axios from "axios";
@@ -92,9 +94,11 @@ const totalUsers = ref(0);
 const pageSize = ref(10);
 const currentPage = ref(1);
 const dialogFormVisible = ref(false);
+const isEditMode = ref(false);
 
-// Form for creating a new user
-const newUserForm = reactive({
+// Form for creating/editing a user
+const newUserForm = ref({
+  id: null,
   firstName: "",
   lastName: "",
   age: null,
@@ -117,38 +121,52 @@ const newUserFormRules = reactive({
 
 // Function to reset the new user form
 const resetNewUserForm = () => {
-  newUserForm.firstName = "";
-  newUserForm.lastName = "";
-  newUserForm.age = null;
-  newUserForm.phone = "";
+  newUserForm.value.id = null;
+  newUserForm.value.firstName = "";
+  newUserForm.value.lastName = "";
+  newUserForm.value.age = null;
+  newUserForm.value.phone = "";
+  dialogFormVisible.value = false;
+  isEditMode.value = false;
 };
 
 // Function to create a new user
 const createUser = () => {
-  const formRef = refs.newUserFormRef;
-  formRef.value.validate((valid) => {
-    if (valid) {
-      loading.value = true;
-      api
-        .post("/users/add", newUserForm)
-        .then(() => {
-          ElNotification.success("User created successfully.");
-          resetNewUserForm();
-          dialogFormVisible.value = false;
-          fetchUsers();
-        })
-        .catch((err) => {
-          console.error("Error creating user:", err);
-          ElNotification.error("Failed to create user.");
-        })
-        .finally(() => {
-          loading.value = false;
-        });
-    } else {
-      ElNotification.warning("Please fill in all required fields.");
-      return false;
-    }
-  });
+  loading.value = true;
+  api
+    .post("/users/add", newUserForm.value)
+    .then(() => {
+      ElNotification.success("User created successfully.");
+      resetNewUserForm();
+      fetchUsers();
+    })
+    .catch((err) => {
+      console.error("Error creating user:", err);
+      ElNotification.error("Failed to create user.");
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+};
+
+// Function to update an existing user
+const updateUser = () => {
+  loading.value = true;
+  api
+    .put(`/users/${newUserForm.value.id}`, newUserForm.value)
+    .then(() => {
+      ElNotification.success("User updated successfully.");
+      resetNewUserForm();
+      fetchUsers();
+    })
+    .catch((err) => {
+      console.error("Error updating user:", err);
+      ElNotification.error("Failed to update user.");
+    })
+    .finally(() => {
+      loading.value = false;
+      console.log(newUserForm.value);
+    });
 };
 
 // Function to fetch users from API
@@ -220,11 +238,24 @@ const handleDelete = (user) => {
     });
 };
 
-// Function to show edit modal (already implemented in your code)
+// Function to open create dialog
+const openCreateDialog = () => {
+  resetNewUserForm();
+  dialogFormVisible.value = true;
+  isEditMode.value = false;
+};
+
+// Function to show edit modal
 const showEditModal = (user) => {
-  // Implementation
+  newUserForm.value = { ...user };
+  dialogFormVisible.value = true;
+  isEditMode.value = true;
 };
 
 // Initial fetch of users when component mounts
 fetchUsers();
 </script>
+
+<style scoped>
+/* Add your custom styles here */
+</style>
