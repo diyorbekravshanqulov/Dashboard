@@ -36,7 +36,7 @@
             id="username"
             class="w-full px-[15px] mt-1 py-3 border rounded border-[#E5E5E5] outline-none focus:border-[#023047] placeholder-[#CDCDCD] text-[12px]"
             type="text"
-            placeholder="Введите имя пользователя"
+            placeholder="username"
           />
         </label>
         <label
@@ -48,7 +48,7 @@
             id="password"
             class="w-full px-[15px] mt-1 py-3 border rounded border-[#E5E5E5] outline-none focus:border-[#023047] placeholder-[#CDCDCD] text-[12px]"
             :type="eyecheck ? 'password' : 'text'"
-            placeholder="Введите пароль"
+            placeholder="password"
           />
         </label>
 
@@ -58,7 +58,7 @@
           class="w-full px-[15px] py-3 text-center rounded-[4px] hover:bg-[#023047] font-medium bg-[#023047] text-[#FCF6F6]"
           style="box-shadow: 0px 1.96px 9.8px 0px #00000040"
         >
-          Авторизоваться
+          Login
         </button>
         <div class="flex justify-between items-center w-full">
           <a href="#" class="text-[#023047] underline cursor-pointer"
